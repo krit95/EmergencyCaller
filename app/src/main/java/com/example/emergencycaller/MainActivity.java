@@ -1,5 +1,10 @@
 package com.example.emergencycaller;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessagingService;
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -7,9 +12,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -23,14 +30,37 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+  public static String SHARED_PREF_NAME = "MY_APP";
+
   private static String TAG = "MainActivity";
-  private TextView textView;
+  private ArrayList<Contact> contactArrayList;
   private Context mContext;
+  private String currentToken = null;
+
+  public static String GET_STRING = "GET",
+          POST_STRING = "POST",
+          PATCH_STRING = "PATCH",
+          DELETE_STRING = "DELETE";
+
+  public static final String hostUrl =
+//          "https://rgenterprises-204606.appspot.com",
+              "http://192.168.0.10",
+  fetchWhitelistUrl = "";
+  public static int apiPort = 3000;
+  public static final int fetchWhitelistCode = 101;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -48,24 +78,129 @@ public class MainActivity extends AppCompatActivity {
                 .setAction("Action", null).show();
       }
     });
-    textView = findViewById(R.id.text1);
     if (!areAllPermissionsAvailable(mContext)) {
       requestAllPermissions(this, mContext);
     }
     if(areAllPermissionsAvailable(mContext)) {
       fetchWhitelist();
       fetchContacts();
+      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl);
     }
   }
 
   private void fetchWhitelist() {
+    updateCurrentToken();
+
+
+
+    // TODO
+  }
+
+  private class HttpAsyncTask extends AsyncTask<String, Void, String> {
+    // This is the JSON body of the post
+    JSONObject postData;
+    int requestCode;
+    String method;
+    //        // This is a constructor that allows you to pass in the JSON body
+    public HttpAsyncTask(Map<String, String> postData, int requestCode, String method) {
+      Log.d(TAG, "inside HttpsPostAsyncTask");
+      this.requestCode = requestCode;
+      this.method = method;
+      if (this.method.equals(POST_STRING) && postData != null) {
+        this.postData = new JSONObject(postData);
+      }
+    }
+
+    // This is a function that we are overriding from AsyncTask. It takes Strings as parameters because that is what we defined for the parameters of our async task
+    @Override
+    protected String doInBackground(String... params) {
+      try {
+        // This is getting the url from the string we passed in
+        URL url = new URL(params[0]);
+        Log.d(TAG, "URL: " + url.toString() + ", method: " + this.method);
+
+        // Create the urlConnection
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.setDoInput(true);
+        if(!this.method.equals(GET_STRING)) urlConnection.setDoOutput(true);
+        urlConnection.setRequestProperty("Content-Type", "application/json");
+        urlConnection.setRequestProperty("X-Environment", "android");
+        urlConnection.setRequestMethod(this.method);
+        // OPTIONAL - Sets an authorization header
+//                urlConnection.setRequestProperty("Authorization", "someAuthString");
+
+//                // Send the post body
+        Log.d(TAG, "Request method: " + urlConnection.getRequestMethod());
+
+        if (!this.method.equals(GET_STRING) && this.postData != null) {
+          OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream());
+          writer.write(postData.toString());
+          writer.flush();
+        }
+
+        int statusCode = urlConnection.getResponseCode();
+        if (statusCode ==  HttpURLConnection.HTTP_OK) {
+          BufferedReader in=new BufferedReader(
+                  new InputStreamReader(
+                          urlConnection.getInputStream()));
+          StringBuffer sb = new StringBuffer();
+          String line;
+          while((line = in.readLine()) != null) {
+            sb.append(line);
+          }
+          in.close();
+          Log.d(TAG, "HTTP response: " + sb.toString());
+          JSONObject resp = new JSONObject(sb.toString());
+          switch(this.requestCode){
+            case fetchWhitelistCode:
+              updateContactList(resp);
+              break;
+            default:
+              Log.d(TAG, "Unknown request code");
+          }
+          // From here you can convert the string to JSON with whatever JSON parser you like to use
+          // After converting the string to JSON, I call my custom callback. You can follow this process too, or you can implement the onPostExecute(Result) method
+        } else {
+          Log.d(TAG, "Error. Response code: " + statusCode);
+          Toast.makeText(MainActivity.this, "Some error occurred. Try again in some time.",
+                  Toast.LENGTH_LONG).show();
+          // Status code is not 200
+          // Do something to handle the error
+        }
+      } catch (Exception e) {
+        Log.d(TAG, e.getLocalizedMessage());
+      }
+      return null;
+    }
+  }
+
+  private void updateContactList(JSONObject response) {
+    runOnUiThread(new Thread(new Runnable() {
+      @Override
+      public void run() {
+        // TODO
+      }
+    }));
+  }
+
+  private void updateCurrentToken() {
+    FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener( this,  new OnSuccessListener<InstanceIdResult>() {
+      @Override
+      public void onSuccess(InstanceIdResult instanceIdResult) {
+        currentToken = instanceIdResult.getToken();
+        Log.d("currentToken", currentToken);
+        sendRegistrationToServer(currentToken);
+      }
+    });
+  }
+
+  private void sendRegistrationToServer(String newToken) {
     // TODO
   }
 
   public void fetchContacts() {
-
+    contactArrayList = new ArrayList<>();
     String phoneNumber = null;
-    String email = null;
 
     Uri CONTENT_URI = ContactsContract.Contacts.CONTENT_URI;
     String _ID = ContactsContract.Contacts._ID;
@@ -75,13 +210,6 @@ public class MainActivity extends AppCompatActivity {
     Uri PhoneCONTENT_URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
     String Phone_CONTACT_ID = ContactsContract.CommonDataKinds.Phone.CONTACT_ID;
     String NUMBER = ContactsContract.CommonDataKinds.Phone.NUMBER;
-
-    Uri EmailCONTENT_URI =  ContactsContract.CommonDataKinds.Email.CONTENT_URI;
-    String EmailCONTACT_ID = ContactsContract.CommonDataKinds.Email.CONTACT_ID;
-    String DATA = ContactsContract.CommonDataKinds.Email.DATA;
-
-    StringBuffer output = new StringBuffer();
-
     ContentResolver contentResolver = getContentResolver();
 
     Cursor cursor = contentResolver.query(CONTENT_URI, null,null, null, null);
@@ -98,37 +226,17 @@ public class MainActivity extends AppCompatActivity {
 
         if (hasPhoneNumber > 0) {
 
-          output.append("\n First Name:" + name);
-
           // Query and loop for every phone number of the contact
           Cursor phoneCursor = contentResolver.query(PhoneCONTENT_URI, null, Phone_CONTACT_ID + " = ?", new String[] { contact_id }, null);
 
-          while (phoneCursor.moveToNext()) {
+          if (phoneCursor.moveToNext()) {
             phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(NUMBER));
-            output.append("\n Phone number:" + phoneNumber);
+            contactArrayList.add(new Contact(name, phoneNumber, false));
 
           }
-
           phoneCursor.close();
-
-          // Query and loop for every email of the contact
-          Cursor emailCursor = contentResolver.query(EmailCONTENT_URI,    null, EmailCONTACT_ID+ " = ?", new String[] { contact_id }, null);
-
-          while (emailCursor.moveToNext()) {
-
-            email = emailCursor.getString(emailCursor.getColumnIndex(DATA));
-
-            output.append("\nEmail:" + email);
-
-          }
-
-          emailCursor.close();
         }
-
-        output.append("\n");
       }
-
-      textView.setText(output);
     }
   }
 
