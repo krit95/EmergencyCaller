@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
   public static int apiPort = 3000;
   public static final int fetchWhitelistCode = 101,
           sendRegTokenCode = 101;
+  private ListView contactsListView;
+  private ContactListAdapter contactListAdapter;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +91,10 @@ public class MainActivity extends AppCompatActivity {
     if (areAllPermissionsAvailable(mContext)) {
       fetchWhitelist();
       fetchContacts();
-//      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "?phone=" + getDevicePhoneNumber());
+      contactsListView = (ListView) findViewById(R.id.contact_list);
+      contactListAdapter = new ContactListAdapter(this, contactArrayList);
+      contactsListView.setAdapter(contactListAdapter);
+      //      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "?phone=" + getDevicePhoneNumber());
     }
   }
 
