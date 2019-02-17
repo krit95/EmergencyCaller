@@ -20,8 +20,9 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
     private Context cContext;
     public List<Contact> contactList;
     private OnItemClickListener onItemClickListener;
+  private OnCallClickListener onCallClickListener;
 
-    public ContactListAdapter(Context context, ArrayList<Contact> contactArrayList) {
+  public ContactListAdapter(Context context, ArrayList<Contact> contactArrayList) {
         super(context, 0, contactArrayList);
         cContext = context;
         contactList = contactArrayList;
@@ -68,6 +69,13 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.onItemClickListener = onItemClickListener;
+    }
+
+    public interface OnCallClickListener {
+      void onCallClicked(View v, int position);
+    }
+    public void setOnCallClickListener(OnCallClickListener onCallClickListener) {
+      this.onCallClickListener = onCallClickListener;
     }
 
     @Override

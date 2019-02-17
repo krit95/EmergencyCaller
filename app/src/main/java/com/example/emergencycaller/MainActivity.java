@@ -15,6 +15,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.provider.ContactsContract;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -40,17 +41,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements ContactListAdapter.OnItemClickListener {
+public class MainActivity extends AppCompatActivity implements ContactListAdapter.OnItemClickListener, ContactListAdapter.OnCallClickListener {
 
   public static String SHARED_PREF_NAME = "MY_APP";
 
   private static String TAG = "MainActivity";
-  private ArrayList<Contact> contactArrayList;
+  public static ArrayList<Contact> contactArrayList;
   private Context mContext;
-  private String currentToken = null;
+  public static String currentToken = null;
 
   public static String GET_STRING = "GET",
           POST_STRING = "POST",
@@ -61,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 //          "https://rgenterprises-204606.appspot.com",
           "http://10.0.5.66:3600",
           fetchWhitelistUrl = "whitelist",
-          sendRegTokenUrl = "",
+          sendRegTokenUrl = "whitelist/createDevice",
           makeEmergencyCallUrl = "";
   public static int apiPort = 3600;
   public static final int fetchWhitelistCode = 101,
@@ -82,46 +84,59 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
       requestAllPermissions(this, mContext);
     }
     if (areAllPermissionsAvailable(mContext)) {
-      fetchIAmInWhiteList();
+      updateCurrentToken();
       fetchContacts();
-      Log.d(TAG, "My phone number: " + getDevicePhoneNumber());
+      Log.d(TAG, "My phone number: " + getDevicePhoneNumber(mContext));
       contactsListView = (ListView) findViewById(R.id.contact_list);
       contactListAdapter = new ContactListAdapter(this, contactArrayList);
       contactsListView.setAdapter(contactListAdapter);
       contactListAdapter.setOnItemClickListener(this);
-      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "/" + getDevicePhoneNumber());
+      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "/" + getDevicePhoneNumber(mContext));
     }
   }
 
   @SuppressLint("MissingPermission")
-  private String getDevicePhoneNumber() {
-    String number = getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE).getString("phone_number",
+  public static String getDevicePhoneNumber(Context context) {
+    String number = context.getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE).getString(
+            "phone_number",
             null);
     if (number == null) {
-      TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+      TelephonyManager tMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
       number = tMgr.getLine1Number();
-      getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE).edit().putString("phone_number",
+      context.getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE).edit().putString("phone_number",
               number).apply();
     }
     return number;
   }
 
-  private void fetchIAmInWhiteList() {
-    updateCurrentToken();
+  @Override
+  public void onItemClicked(View v, int position) {
+    final Contact selectedContact = (Contact) contactArrayList.get(position);
+    Log.d(TAG, "Contact selected: " + selectedContact.getName());
+    if(selectedContact.isWhitelisted()) {
+      HashMap<String, String> postData = new HashMap<>();
+      postData.put("phone_no", getDevicePhoneNumber(getApplicationContext()));
+      postData.put("token", currentToken);
+      postData.put("call_to", selectedContact.getPhoneNumber());
+      new HttpAsyncTask(postData, makeEmergencyCallCode, POST_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl);
+      new CountDownTimer(3000, 1000) {
+        @Override
+        public void onTick(long millisUntilFinished) {
 
+        }
 
-
-    // TODO
+        @Override
+        public void onFinish() {
+          Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + selectedContact.getPhoneNumber()));
+          startActivity(intent);
+        }
+      };
+    }
   }
 
   @Override
-  public void onItemClicked(View v, int position) {
+  public void onCallClicked(View v, int position) {
     Contact selectedContact = (Contact) contactArrayList.get(position);
-    Log.d(TAG, "Contact selected: " + selectedContact.getName());
-    if(selectedContact.isWhitelisted()) {
-//      new HttpAsyncTask(null, makeEmergencyCallCode, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl + "?to" +
-//            "=" + selectedContact.getPhoneNumber() + "&phone=" + getDevicePhoneNumber());
-    }
     Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + selectedContact.getPhoneNumber()));
     startActivity(intent);
   }
@@ -214,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
           JSONArray jsonArray = response.getJSONArray("whitelist");
           for(int i=0;i<jsonArray.length();i++) {
             String otherPhoneNumber = (String) jsonArray.get(i);
-            Log.d(TAG, "Other whitelist ph no:" + otherPhoneNumber);
+//            Log.d(TAG, "Other whitelist ph no:" + otherPhoneNumber);
             for(Contact contact: contactArrayList) {
               if(contact.getPhoneNumber().contains(otherPhoneNumber)) {
                 Log.d(TAG, "Whitelisted: " + contact.getName());
@@ -222,14 +237,6 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
               }
             }
           }
-//          for(Contact contact: contactArrayList) {
-//            Log.d(TAG, "Whitelisted: " + contact.getName() + ", " + contact.isWhitelisted());
-//          }
-//          contactListAdapter = new ContactListAdapter(MainActivity.this, contactArrayList);
-//          contactsListView.setAdapter(contactListAdapter);
-//          contactListAdapter.setOnItemClickListener(MainActivity.this);
-
-//          contactsListView = (ListView) findViewById(R.id.contact_list);
           contactListAdapter.notifyDataSetChanged();
         } catch (JSONException e) {
           e.printStackTrace();
@@ -244,14 +251,16 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
       public void onSuccess(InstanceIdResult instanceIdResult) {
         currentToken = instanceIdResult.getToken();
         Log.d("currentToken", currentToken);
-        sendRegistrationToServer(currentToken);
+        sendRegistrationToServer(getApplicationContext(), currentToken);
       }
     });
   }
 
-  public static void sendRegistrationToServer(String newToken) {
-    // TODO
-//    new HttpAsyncTask(null, sendRegTokenCode, GET_STRING).execute(hostUrl + "/" + sendRegTokenUrl + "?token=" + newToken + "&phone=" + getDevicePhoneNumber());
+  public void sendRegistrationToServer(Context context, String newToken) {
+    HashMap<String, String> postData = new HashMap<>();
+    postData.put("phone_no", getDevicePhoneNumber(context));
+    postData.put("token", newToken);
+    new HttpAsyncTask(postData, sendRegTokenCode, POST_STRING).execute(hostUrl + "/" + sendRegTokenUrl);
   }
 
   public void fetchContacts() {

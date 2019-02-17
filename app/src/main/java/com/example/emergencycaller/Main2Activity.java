@@ -15,6 +15,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -23,19 +25,27 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.example.emergencycaller.MainActivity.GET_STRING;
 import static com.example.emergencycaller.MainActivity.POST_STRING;
-import static com.example.emergencycaller.MainActivity.sendRegistrationToServer;
+import static com.example.emergencycaller.MainActivity.contactArrayList;
+import static com.example.emergencycaller.MainActivity.currentToken;
+import static com.example.emergencycaller.MainActivity.fetchWhitelistCode;
+import static com.example.emergencycaller.MainActivity.getDevicePhoneNumber;
+import static com.example.emergencycaller.MainActivity.hostUrl;
+import static com.example.emergencycaller.MainActivity.sendRegTokenCode;
+import static com.example.emergencycaller.MainActivity.sendRegTokenUrl;
 
 public class Main2Activity extends AppCompatActivity implements WhiteListAdapter.OnItemClickListener {
 
     private final String TAG = "Main2Activity";
     private Context mContext;
-    private static final int fetchIAmInWhitelistCode = 201;
-    private String currentToken;
-
+    public static final int fetchIHaveWhitelistCode = 201,
+        deleteMeFromWhitelistCode = 202;
+    public static final String fetchIHaveWhitelistedUrl = "",
+            deleteMeFromWhitelistedUrl = "";
     private ArrayList<Contact> whiteListedArrayList;
     private ListView whiteListView;
     private WhiteListAdapter whiteListAdapter;
@@ -54,17 +64,30 @@ public class Main2Activity extends AppCompatActivity implements WhiteListAdapter
                         .setAction("Action", null).show();
             }
         });
+        whiteListedArrayList = new ArrayList<>();
+        whiteListView = (ListView) findViewById(R.id.whitelistview);
+        whiteListAdapter = new WhiteListAdapter(mContext, whiteListedArrayList);
+        whiteListView.setAdapter(whiteListAdapter);
+        whiteListAdapter.setOnItemClickListener(this);
         fetchIHaveWhitelisted();
     }
 
     private void fetchIHaveWhitelisted() {
-        updateCurrentToken();
-//        new HttpAsyncTask()
+        String myPhoneNumber = getDevicePhoneNumber(getApplicationContext());
+        HashMap<String, String> postData = new HashMap<>();
+        postData.put("phone_no", myPhoneNumber);
+        postData.put("token", currentToken);
+        new HttpAsyncTask(postData, fetchIHaveWhitelistCode, POST_STRING).execute(hostUrl + "/" + fetchIHaveWhitelistedUrl);
     }
 
     @Override
     public void onItemClicked (View v,int position){
-
+        String myPhoneNumber = getDevicePhoneNumber(getApplicationContext());
+        HashMap<String, String> postData = new HashMap<>();
+        postData.put("phone_no", myPhoneNumber);
+        postData.put("token", currentToken);
+        postData.put("to_delete", whiteListedArrayList.get(position).getPhoneNumber());
+        new HttpAsyncTask(postData, deleteMeFromWhitelistCode, POST_STRING).execute(hostUrl + "/" + deleteMeFromWhitelistCode);
     }
 
     private class HttpAsyncTask extends AsyncTask<String, Void, String> {
@@ -123,9 +146,11 @@ public class Main2Activity extends AppCompatActivity implements WhiteListAdapter
                     Log.d(TAG, "HTTP response: " + sb.toString());
                     JSONObject resp = new JSONObject(sb.toString());
                     switch (this.requestCode){
-                        case fetchIAmInWhitelistCode:
+                        case fetchIHaveWhitelistCode:
                             updateWhiteList(resp);
                             break;
+                        case deleteMeFromWhitelistCode:
+                            fetchIHaveWhitelisted();
                         default:
                             Log.d(TAG, "Unknown request code");
                     }
@@ -146,28 +171,29 @@ public class Main2Activity extends AppCompatActivity implements WhiteListAdapter
         }
     }
 
-    private void updateWhiteList(JSONObject resp) {
+    private void updateWhiteList(final JSONObject resp) {
         runOnUiThread(new Thread(new Runnable() {
             @Override
             public void run() {
-                whiteListedArrayList = new ArrayList<>();
-                // TODO
-                whiteListView = (ListView) findViewById(R.id.whitelistview);
-                whiteListAdapter = new WhiteListAdapter(mContext, whiteListedArrayList);
-                whiteListView.setAdapter(whiteListAdapter);
+                try {
+                    whiteListedArrayList.clear();
+                    JSONArray jsonArray = resp.getJSONArray("whitelisted");
+                    for(int i=0;i<jsonArray.length();i++){
+                        String otherPhoneNumber = (String) jsonArray.get(i);
+            //            Log.d(TAG, "Other whitelist ph no:" + otherPhoneNumber);
+                        for(Contact contact: contactArrayList) {
+                            if(contact.getPhoneNumber().contains(otherPhoneNumber)) {
+                                whiteListedArrayList.add(contact);
+                            }
+                        }
+                    }
+                    whiteListAdapter.notifyDataSetChanged();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
             }
         }));
-    }
-
-    private void updateCurrentToken() {
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener( this,  new OnSuccessListener<InstanceIdResult>() {
-            @Override
-            public void onSuccess(InstanceIdResult instanceIdResult) {
-                currentToken = instanceIdResult.getToken();
-                Log.d("currentToken", currentToken);
-                sendRegistrationToServer(currentToken);
-            }
-        });
     }
 
 }
