@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,10 +63,12 @@ public class MainActivity extends AppCompatActivity {
 //          "https://rgenterprises-204606.appspot.com",
           "http://192.168.0.10",
           fetchWhitelistUrl = "",
-          sendRegTokenUrl = "";
+          sendRegTokenUrl = "",
+          makeEmergencyCallUrl = "";
   public static int apiPort = 3000;
   public static final int fetchWhitelistCode = 101,
-          sendRegTokenCode = 101;
+          sendRegTokenCode = 102,
+          makeEmergencyCall = 103;
   private ListView contactsListView;
   private ContactListAdapter contactListAdapter;
 
@@ -77,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
-    FloatingActionButton fab = findViewById(R.id.fab);
+    MovableFloatingActionButton fab = findViewById(R.id.fab);
     fab.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -91,9 +94,20 @@ public class MainActivity extends AppCompatActivity {
     if (areAllPermissionsAvailable(mContext)) {
       fetchWhitelist();
       fetchContacts();
+      Log.d(TAG, "My phone number: " + getDevicePhoneNumber());
       contactsListView = (ListView) findViewById(R.id.contact_list);
       contactListAdapter = new ContactListAdapter(this, contactArrayList);
       contactsListView.setAdapter(contactListAdapter);
+      contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+          Log.d(TAG, "Clicked");
+          Contact selectedContact = (Contact) contactArrayList.get(position);
+          Log.d(TAG, "Contact selected: " + selectedContact.getName());
+//          new HttpAsyncTask(null, makeEmergencyCall, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl +
+//                  "?myPhone=" + getDevicePhoneNumber() + "&to=" + selectedContact);
+        }
+      });
       //      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "?phone=" + getDevicePhoneNumber());
     }
   }
@@ -255,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
           if (phoneCursor.moveToNext()) {
             phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(NUMBER));
-            contactArrayList.add(new Contact(name, phoneNumber, false));
+            contactArrayList.add(new Contact(name, phoneNumber, true));
 
           }
           phoneCursor.close();
