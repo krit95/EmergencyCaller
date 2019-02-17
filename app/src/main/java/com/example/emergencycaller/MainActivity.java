@@ -64,10 +64,10 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 
   public static final String hostUrl =
 //          "https://rgenterprises-204606.appspot.com",
-          "http://10.0.5.66:3700",
+          "http://10.0.5.66:3710",
           fetchWhitelistUrl = "whitelist",
           sendRegTokenUrl = "whitelist/createDevice",
-          makeEmergencyCallUrl = "";
+          makeEmergencyCallUrl = "whitelist/callingTrigger";
   public static int apiPort = 3600;
   public static final int fetchWhitelistCode = 101,
           sendRegTokenCode = 102,
@@ -94,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
       contactListAdapter = new ContactListAdapter(this, contactArrayList);
       contactsListView.setAdapter(contactListAdapter);
       contactListAdapter.setOnItemClickListener(this);
+      contactListAdapter.setOnCallClickListener(this);
       new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "/" + getDevicePhoneNumber(mContext));
     }
   }
@@ -123,18 +124,19 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
       postData.put("toPhoneNo", selectedContact.getPhoneNumber());
       postData.put("time", (System.currentTimeMillis() + 60 * 1000) + "");
       new HttpAsyncTask(postData, makeEmergencyCallCode, POST_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl);
-      new CountDownTimer(3000, 1000) {
-        @Override
-        public void onTick(long millisUntilFinished) {
-
-        }
-
-        @Override
-        public void onFinish() {
-          Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + selectedContact.getPhoneNumber()));
-          startActivity(intent);
-        }
-      };
+      Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + selectedContact.getPhoneNumber()));
+      startActivity(intent);
+//      new CountDownTimer(3000, 1000) {
+//        @Override
+//        public void onTick(long millisUntilFinished) {
+//
+//        }
+//
+//        @Override
+//        public void onFinish() {
+//
+//        }
+//      };
     }
   }
 
@@ -193,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
           BufferedReader in = new BufferedReader(
                   new InputStreamReader(
                           urlConnection.getInputStream()));
-          StringBuffer sb = new StringBuffer();
+          StringBuilder sb = new StringBuilder();
           String line;
           while((line = in.readLine()) != null) {
             sb.append(line);
@@ -212,6 +214,16 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
           // After converting the string to JSON, I call my custom callback. You can follow this process too, or you can implement the onPostExecute(Result) method
         } else {
           Log.d(TAG, "Error. Response code: " + statusCode);
+          BufferedReader in = new BufferedReader(
+                  new InputStreamReader(
+                          urlConnection.getInputStream()));
+          StringBuilder sb = new StringBuilder();
+          String line;
+          while((line = in.readLine()) != null) {
+            sb.append(line);
+          }
+          in.close();
+          Log.d(TAG, "HTTP response: " + sb.toString());
           Toast.makeText(MainActivity.this, "Some error occurred. Try again in some time.",
                   Toast.LENGTH_LONG).show();
           // Status code is not 200

@@ -38,7 +38,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     Log.d(TAG, String.valueOf("remote message: " + remoteMessage.getData()));
     try {
       long time_till = Long.parseLong(remoteMessage.getData().get("time"));
-      if (time_till <= System.currentTimeMillis()) {
+      if (time_till >= System.currentTimeMillis()) {
         AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE);
         SharedPreferences.Editor sharedPrefsEditor = sharedPreferences.edit();
