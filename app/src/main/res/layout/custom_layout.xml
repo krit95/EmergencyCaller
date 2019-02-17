@@ -11,7 +11,9 @@
         android:src="@drawable/ic_call_green_24dp"
         android:contentDescription="@string/normal_call"
         android:layout_alignParentRight="true"
-        android:layout_centerInParent="true"/>
+        android:layout_centerInParent="true"
+        android:background="#00000000"
+        android:paddingLeft="dp"/>
     <RelativeLayout
         android:id="@+id/contact_details"
         android:layout_width="match_parent"
