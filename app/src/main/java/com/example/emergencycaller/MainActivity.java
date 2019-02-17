@@ -29,6 +29,8 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -57,11 +59,11 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 
   public static final String hostUrl =
 //          "https://rgenterprises-204606.appspot.com",
-          "http://192.168.0.10",
-          fetchWhitelistUrl = "",
+          "http://10.0.5.66:3600",
+          fetchWhitelistUrl = "whitelist",
           sendRegTokenUrl = "",
           makeEmergencyCallUrl = "";
-  public static int apiPort = 3000;
+  public static int apiPort = 3600;
   public static final int fetchWhitelistCode = 101,
           sendRegTokenCode = 102,
           makeEmergencyCallCode = 103;
@@ -87,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
       contactListAdapter = new ContactListAdapter(this, contactArrayList);
       contactsListView.setAdapter(contactListAdapter);
       contactListAdapter.setOnItemClickListener(this);
-      //      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "?phone=" + getDevicePhoneNumber());
+      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "/" + getDevicePhoneNumber());
     }
   }
 
@@ -116,10 +118,12 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
   public void onItemClicked(View v, int position) {
     Contact selectedContact = (Contact) contactArrayList.get(position);
     Log.d(TAG, "Contact selected: " + selectedContact.getName());
-//    new HttpAsyncTask(null, makeEmergencyCallCode, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl + "?to" +
+    if(selectedContact.isWhitelisted()) {
+//      new HttpAsyncTask(null, makeEmergencyCallCode, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl + "?to" +
 //            "=" + selectedContact.getPhoneNumber() + "&phone=" + getDevicePhoneNumber());
+    }
     Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + selectedContact.getPhoneNumber()));
-//    startActivity(intent);
+    startActivity(intent);
   }
 
   private class HttpAsyncTask extends AsyncTask<String, Void, String> {
@@ -165,8 +169,9 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
         }
 
         int statusCode = urlConnection.getResponseCode();
+
         if (statusCode ==  HttpURLConnection.HTTP_OK) {
-          BufferedReader in=new BufferedReader(
+          BufferedReader in = new BufferedReader(
                   new InputStreamReader(
                           urlConnection.getInputStream()));
           StringBuffer sb = new StringBuffer();
@@ -177,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
           in.close();
           Log.d(TAG, "HTTP response: " + sb.toString());
           JSONObject resp = new JSONObject(sb.toString());
-          switch(this.requestCode){
+          switch (this.requestCode) {
             case fetchWhitelistCode:
               updateContactList(resp);
               break;
@@ -200,14 +205,35 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
     }
   }
 
-  private void updateContactList(JSONObject response) {
+  private void updateContactList(final JSONObject response) {
     runOnUiThread(new Thread(new Runnable() {
       @Override
       public void run() {
-        for(Contact contact: contactArrayList) {
-          // TODO
+        Log.d(TAG, "resp:" + response.toString());
+        try {
+          JSONArray jsonArray = response.getJSONArray("whitelist");
+          for(int i=0;i<jsonArray.length();i++) {
+            String otherPhoneNumber = (String) jsonArray.get(i);
+            Log.d(TAG, "Other whitelist ph no:" + otherPhoneNumber);
+            for(Contact contact: contactArrayList) {
+              if(contact.getPhoneNumber().contains(otherPhoneNumber)) {
+                Log.d(TAG, "Whitelisted: " + contact.getName());
+                contact.setWhitelisted(true);
+              }
+            }
+          }
+//          for(Contact contact: contactArrayList) {
+//            Log.d(TAG, "Whitelisted: " + contact.getName() + ", " + contact.isWhitelisted());
+//          }
+//          contactListAdapter = new ContactListAdapter(MainActivity.this, contactArrayList);
+//          contactsListView.setAdapter(contactListAdapter);
+//          contactListAdapter.setOnItemClickListener(MainActivity.this);
+
+//          contactsListView = (ListView) findViewById(R.id.contact_list);
+          contactListAdapter.notifyDataSetChanged();
+        } catch (JSONException e) {
+          e.printStackTrace();
         }
-        contactListAdapter.notifyDataSetChanged();
       }
     }));
   }
@@ -223,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
     });
   }
 
-  private void sendRegistrationToServer(String newToken) {
+  public static void sendRegistrationToServer(String newToken) {
     // TODO
 //    new HttpAsyncTask(null, sendRegTokenCode, GET_STRING).execute(hostUrl + "/" + sendRegTokenUrl + "?token=" + newToken + "&phone=" + getDevicePhoneNumber());
   }
@@ -261,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 
           if (phoneCursor.moveToNext()) {
             phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(NUMBER));
-            contactArrayList.add(new Contact(name, phoneNumber, true));
+            contactArrayList.add(new Contact(name, phoneNumber, false));
 
           }
           phoneCursor.close();

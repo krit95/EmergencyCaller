@@ -35,5 +35,16 @@ public class Contact {
   public void setWhitelisted(boolean whitelisted) {
     this.whitelisted = whitelisted;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if(!(o instanceof Contact)) {
+      return false;
+    }
+
+    Contact other = (Contact) o;
+    return this.getPhoneNumber().equals(other.getPhoneNumber());
+  }
+
 }
 

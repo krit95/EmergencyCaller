@@ -12,7 +12,7 @@
         android:contentDescription="@string/normal_call"
         android:layout_alignParentRight="true"
         android:layout_centerInParent="true"
-        android:background="#00000000"
+        android:background="@android:color/darker_gray"
         android:padding="16dp"/>
     <RelativeLayout
         android:id="@+id/contact_details"

@@ -31,6 +31,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
     super.onMessageReceived(remoteMessage);
+    Log.d(TAG, String.valueOf(remoteMessage.getData()));
   }
 
   private void sendRegistrationToServer(String token) {

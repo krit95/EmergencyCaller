@@ -1,8 +1,10 @@
 package com.example.emergencycaller;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +18,7 @@ import java.util.List;
 class ContactListAdapter extends ArrayAdapter<Contact> {
 
     private Context cContext;
-    private List<Contact> contactList= new ArrayList<>();
+    public List<Contact> contactList;
     private OnItemClickListener onItemClickListener;
 
     public ContactListAdapter(Context context, ArrayList<Contact> contactArrayList) {
@@ -42,8 +44,12 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
         TextView number = (TextView) contactDetailsLayout.findViewById(R.id.phNo);
         number.setText(currentContact.getPhoneNumber());
 
+//        Log.d("Adapter", "Whitelisted: " + currentContact.getName() + ", " + currentContact.isWhitelisted());
+
         if(!currentContact.isWhitelisted()){
-            contactDetailsLayout.setBackgroundColor(Color.WHITE);
+            contactDetailsLayout.setBackgroundColor(Color.DKGRAY);
+        } else {
+            contactDetailsLayout.setBackgroundColor(Color.parseColor("#ffcc0000"));
         }
 
         contactDetailsLayout.setOnClickListener(new View.OnClickListener() {
@@ -62,6 +68,15 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.onItemClickListener = onItemClickListener;
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        super.notifyDataSetChanged();
+//        Log.d("whitelist", "data set changed called");
+//        for(Contact contact: contactList) {
+//            Log.d("Adapter", "Whitelisted: " + contact.getName() + ", " + contact.isWhitelisted());
+//        }
     }
 
 }

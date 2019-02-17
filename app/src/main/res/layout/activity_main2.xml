@@ -9,7 +9,7 @@
     <ListView
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:id="@+id/whitelist"/>
+        android:id="@+id/whitelistview"/>
 
     <com.example.emergencycaller.MovableFloatingActionButton
         android:id="@+id/fab"
