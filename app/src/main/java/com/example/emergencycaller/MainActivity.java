@@ -84,14 +84,6 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
-    MovableFloatingActionButton fab = findViewById(R.id.fab);
-    fab.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        Snackbar.make(view, "Add new contact to whitelist", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
-      }
-    });
     if (!areAllPermissionsAvailable(mContext)) {
       requestAllPermissions(this, mContext);
     }
@@ -308,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 
     //noinspection SimplifiableIfStatement
     if (id == R.id.action_settings) {
-      return true;
+      startActivity(new Intent(this, Main2Activity.class));
     }
 
     return super.onOptionsItemSelected(item);

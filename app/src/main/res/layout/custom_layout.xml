@@ -13,14 +13,14 @@
         android:layout_alignParentRight="true"
         android:layout_centerInParent="true"
         android:background="#00000000"
-        android:paddingLeft="16dp"/>
+        android:padding="16dp"/>
     <RelativeLayout
         android:id="@+id/contact_details"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_toLeftOf="@id/normal_call"
-        android:background="@drawable/contact_details_bg"
-        android:padding="16dp">
+        android:background="@android:color/holo_red_dark"
+        android:padding="20dp">
         <TextView
             android:id="@+id/cName"
             android:layout_width="wrap_content"

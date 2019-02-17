@@ -44,8 +44,8 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
         TextView number = (TextView) contactDetailsLayout.findViewById(R.id.phNo);
         number.setText(currentContact.getPhoneNumber());
 
-        if(currentContact.isWhitelisted()){
-//            contactDetailsLayout.setBackgroundColor(Color.parseColor("#e29791"));
+        if(!currentContact.isWhitelisted()){
+            contactDetailsLayout.setBackgroundColor(Color.WHITE);
         }
 
         contactDetailsLayout.setOnClickListener(new View.OnClickListener() {
