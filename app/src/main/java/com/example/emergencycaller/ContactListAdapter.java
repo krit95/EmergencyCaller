@@ -19,6 +19,7 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
 
     private Context cContext;
     private List<Contact> contactList= new ArrayList<>();
+    private OnItemClickListener onItemClickListener;
 
     public ContactListAdapter(Context context, ArrayList<Contact> contactArrayList) {
         super(context, 0, contactArrayList);
@@ -26,7 +27,7 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
         contactList = contactArrayList;
     }
 
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent){
+    public View getView(final int position, @Nullable View convertView, @NonNull ViewGroup parent){
         View listItem = convertView;
         if (listItem == null) {
             listItem = LayoutInflater.from(cContext).inflate(R.layout.custom_layout, parent, false);
@@ -47,7 +48,22 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
 //            contactDetailsLayout.setBackgroundColor(Color.parseColor("#e29791"));
         }
 
+        contactDetailsLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onItemClickListener.onItemClicked(v, position);
+            }
+        });
+
         return listItem;
+    }
+
+    public interface OnItemClickListener {
+        void onItemClicked(View v, int position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
     }
 
 }
