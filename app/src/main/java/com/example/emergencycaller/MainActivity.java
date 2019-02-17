@@ -3,7 +3,6 @@ package com.example.emergencycaller;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-import com.google.firebase.messaging.FirebaseMessagingService;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -15,11 +14,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -30,9 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -43,8 +37,6 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
       requestAllPermissions(this, mContext);
     }
     if (areAllPermissionsAvailable(mContext)) {
-      fetchWhitelist();
+      fetchIAmInWhiteList();
       fetchContacts();
       Log.d(TAG, "My phone number: " + getDevicePhoneNumber());
       contactsListView = (ListView) findViewById(R.id.contact_list);
@@ -120,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
     return number;
   }
 
-  private void fetchWhitelist() {
+  private void fetchIAmInWhiteList() {
     updateCurrentToken();
 
 

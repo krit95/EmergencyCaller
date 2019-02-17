@@ -7,19 +7,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class ContactListAdapter extends ArrayAdapter<Contact> {
+class WhiteListAdapter extends ArrayAdapter<Contact> {
 
     private Context cContext;
     private List<Contact> contactList= new ArrayList<>();
     private OnItemClickListener onItemClickListener;
 
-    public ContactListAdapter(Context context, ArrayList<Contact> contactArrayList) {
+    public WhiteListAdapter(Context context, ArrayList<Contact> contactArrayList) {
         super(context, 0, contactArrayList);
         cContext = context;
         contactList = contactArrayList;
@@ -28,7 +29,7 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
     public View getView(final int position, @Nullable View convertView, @NonNull ViewGroup parent){
         View listItem = convertView;
         if (listItem == null) {
-            listItem = LayoutInflater.from(cContext).inflate(R.layout.contactlistitem, parent, false);
+            listItem = LayoutInflater.from(cContext).inflate(R.layout.whitelistitem, parent, false);
         }
 
         Contact currentContact = contactList.get(position);
@@ -42,11 +43,9 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
         TextView number = (TextView) contactDetailsLayout.findViewById(R.id.phNo);
         number.setText(currentContact.getPhoneNumber());
 
-        if(currentContact.isWhitelisted()){
-//            contactDetailsLayout.setBackgroundColor(Color.parseColor("#e29791"));
-        }
+        ImageButton delbtn = (ImageButton) listItem.findViewById(R.id.delete_btn);
 
-        contactDetailsLayout.setOnClickListener(new View.OnClickListener() {
+        delbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onItemClickListener.onItemClicked(v, position);
