@@ -10,6 +10,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -42,10 +43,13 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ContactListAdapter.OnItemClickListener {
 
   public static String SHARED_PREF_NAME = "MY_APP";
 
@@ -68,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
   public static int apiPort = 3000;
   public static final int fetchWhitelistCode = 101,
           sendRegTokenCode = 102,
-          makeEmergencyCall = 103;
+          makeEmergencyCallCode = 103;
   private ListView contactsListView;
   private ContactListAdapter contactListAdapter;
 
@@ -98,16 +102,7 @@ public class MainActivity extends AppCompatActivity {
       contactsListView = (ListView) findViewById(R.id.contact_list);
       contactListAdapter = new ContactListAdapter(this, contactArrayList);
       contactsListView.setAdapter(contactListAdapter);
-      contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-          Log.d(TAG, "Clicked");
-          Contact selectedContact = (Contact) contactArrayList.get(position);
-          Log.d(TAG, "Contact selected: " + selectedContact.getName());
-//          new HttpAsyncTask(null, makeEmergencyCall, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl +
-//                  "?myPhone=" + getDevicePhoneNumber() + "&to=" + selectedContact);
-        }
-      });
+      contactListAdapter.setOnItemClickListener(this);
       //      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "?phone=" + getDevicePhoneNumber());
     }
   }
@@ -131,6 +126,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     // TODO
+  }
+
+  @Override
+  public void onItemClicked(View v, int position) {
+    Contact selectedContact = (Contact) contactArrayList.get(position);
+    Log.d(TAG, "Contact selected: " + selectedContact.getName());
+//    new HttpAsyncTask(null, makeEmergencyCallCode, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl + "?to" +
+//            "=" + selectedContact.getPhoneNumber() + "&phone=" + getDevicePhoneNumber());
+    Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + selectedContact.getPhoneNumber()));
+//    startActivity(intent);
   }
 
   private class HttpAsyncTask extends AsyncTask<String, Void, String> {
@@ -215,7 +220,10 @@ public class MainActivity extends AppCompatActivity {
     runOnUiThread(new Thread(new Runnable() {
       @Override
       public void run() {
-        // TODO
+        for(Contact contact: contactArrayList) {
+          // TODO
+        }
+        contactListAdapter.notifyDataSetChanged();
       }
     }));
   }
@@ -276,6 +284,12 @@ public class MainActivity extends AppCompatActivity {
         }
       }
     }
+    contactArrayList.sort(new Comparator<Contact>() {
+      @Override
+      public int compare(Contact o1, Contact o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
   }
 
   @Override
@@ -330,6 +344,7 @@ public class MainActivity extends AppCompatActivity {
     List<String> permissions = new ArrayList<>();
     permissions.add(Manifest.permission.READ_PHONE_STATE);
     permissions.add(Manifest.permission.READ_CONTACTS);
+    permissions.add(Manifest.permission.CALL_PHONE);
     return permissions;
   }
 
