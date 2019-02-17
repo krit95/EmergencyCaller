@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -59,6 +60,14 @@ class ContactListAdapter extends ArrayAdapter<Contact> {
                 onItemClickListener.onItemClicked(v, position);
             }
         });
+
+      ImageButton normalCallBtn = (ImageButton) listItem.findViewById(R.id.normal_call);
+      normalCallBtn.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          onCallClickListener.onCallClicked(v, position);
+        }
+      });
 
         return listItem;
     }
