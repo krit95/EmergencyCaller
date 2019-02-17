@@ -1,6 +1,8 @@
 package com.example.emergencycaller;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
@@ -17,6 +19,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 
   public static final String hostUrl =
 //          "https://rgenterprises-204606.appspot.com",
-          "http://10.0.5.66:3600",
+          "http://10.0.5.66:3700",
           fetchWhitelistUrl = "whitelist",
           sendRegTokenUrl = "whitelist/createDevice",
           makeEmergencyCallUrl = "";
@@ -115,9 +118,10 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
     Log.d(TAG, "Contact selected: " + selectedContact.getName());
     if(selectedContact.isWhitelisted()) {
       HashMap<String, String> postData = new HashMap<>();
-      postData.put("phone_no", getDevicePhoneNumber(getApplicationContext()));
+      postData.put("phoneNo", getDevicePhoneNumber(getApplicationContext()));
       postData.put("token", currentToken);
-      postData.put("call_to", selectedContact.getPhoneNumber());
+      postData.put("toPhoneNo", selectedContact.getPhoneNumber());
+      postData.put("time", (System.currentTimeMillis() + 60 * 1000) + "");
       new HttpAsyncTask(postData, makeEmergencyCallCode, POST_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl);
       new CountDownTimer(3000, 1000) {
         @Override
@@ -246,19 +250,24 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
   }
 
   private void updateCurrentToken() {
-    FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener( this,  new OnSuccessListener<InstanceIdResult>() {
-      @Override
-      public void onSuccess(InstanceIdResult instanceIdResult) {
-        currentToken = instanceIdResult.getToken();
-        Log.d("currentToken", currentToken);
-        sendRegistrationToServer(getApplicationContext(), currentToken);
-      }
-    });
+    FirebaseInstanceId.getInstance().getInstanceId()
+        .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+          @Override
+          public void onComplete(@NonNull Task<InstanceIdResult> task) {
+            if (!task.isSuccessful()) {
+              Log.w(TAG, "getInstanceId failed", task.getException());
+              return;
+            }
+            currentToken = task.getResult().getToken();
+            Log.d("currentToken", currentToken);
+            sendRegistrationToServer(getApplicationContext(), currentToken);
+          }
+        });
   }
 
   public void sendRegistrationToServer(Context context, String newToken) {
     HashMap<String, String> postData = new HashMap<>();
-    postData.put("phone_no", getDevicePhoneNumber(context));
+    postData.put("phoneNo", getDevicePhoneNumber(context));
     postData.put("token", newToken);
     new HttpAsyncTask(postData, sendRegTokenCode, POST_STRING).execute(hostUrl + "/" + sendRegTokenUrl);
   }
