@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements ContactListAdapte
 
   public static final String hostUrl =
 //          "https://rgenterprises-204606.appspot.com",
-          "http://10.0.5.66:3700",
+          "http://10.0.5.66:3710",
           fetchWhitelistUrl = "whitelist",
           sendRegTokenUrl = "whitelist/createDevice",
           makeEmergencyCallUrl = "";
