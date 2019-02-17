@@ -6,6 +6,7 @@ import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessagingService;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -23,10 +24,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,10 +61,14 @@ public class MainActivity extends AppCompatActivity {
 
   public static final String hostUrl =
 //          "https://rgenterprises-204606.appspot.com",
-              "http://192.168.0.10",
-  fetchWhitelistUrl = "";
+          "http://192.168.0.10",
+          fetchWhitelistUrl = "",
+          sendRegTokenUrl = "",
+          makeEmergencyCallUrl = "";
   public static int apiPort = 3000;
-  public static final int fetchWhitelistCode = 101;
+  public static final int fetchWhitelistCode = 101,
+          sendRegTokenCode = 102,
+          makeEmergencyCall = 103;
   private ListView contactsListView;
   private ContactListAdapter contactListAdapter;
 
@@ -73,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
-    FloatingActionButton fab = findViewById(R.id.fab);
+    MovableFloatingActionButton fab = findViewById(R.id.fab);
     fab.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -84,14 +91,38 @@ public class MainActivity extends AppCompatActivity {
     if (!areAllPermissionsAvailable(mContext)) {
       requestAllPermissions(this, mContext);
     }
-    if(areAllPermissionsAvailable(mContext)) {
+    if (areAllPermissionsAvailable(mContext)) {
       fetchWhitelist();
       fetchContacts();
+      Log.d(TAG, "My phone number: " + getDevicePhoneNumber());
       contactsListView = (ListView) findViewById(R.id.contact_list);
       contactListAdapter = new ContactListAdapter(this, contactArrayList);
       contactsListView.setAdapter(contactListAdapter);
-      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl);
+      contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+          Log.d(TAG, "Clicked");
+          Contact selectedContact = (Contact) contactArrayList.get(position);
+          Log.d(TAG, "Contact selected: " + selectedContact.getName());
+//          new HttpAsyncTask(null, makeEmergencyCall, GET_STRING).execute(hostUrl + "/" + makeEmergencyCallUrl +
+//                  "?myPhone=" + getDevicePhoneNumber() + "&to=" + selectedContact);
+        }
+      });
+      //      new HttpAsyncTask(null, fetchWhitelistCode, GET_STRING).execute(hostUrl + "/" + fetchWhitelistUrl + "?phone=" + getDevicePhoneNumber());
     }
+  }
+
+  @SuppressLint("MissingPermission")
+  private String getDevicePhoneNumber() {
+    String number = getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE).getString("phone_number",
+            null);
+    if (number == null) {
+      TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+      number = tMgr.getLine1Number();
+      getSharedPreferences(SHARED_PREF_NAME, MODE_PRIVATE).edit().putString("phone_number",
+              number).apply();
+    }
+    return number;
   }
 
   private void fetchWhitelist() {
@@ -202,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
 
   private void sendRegistrationToServer(String newToken) {
     // TODO
+//    new HttpAsyncTask(null, sendRegTokenCode, GET_STRING).execute(hostUrl + "/" + sendRegTokenUrl + "?token=" + newToken + "&phone=" + getDevicePhoneNumber());
   }
 
   public void fetchContacts() {
@@ -237,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
           if (phoneCursor.moveToNext()) {
             phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(NUMBER));
-            contactArrayList.add(new Contact(name, phoneNumber, false));
+            contactArrayList.add(new Contact(name, phoneNumber, true));
 
           }
           phoneCursor.close();
