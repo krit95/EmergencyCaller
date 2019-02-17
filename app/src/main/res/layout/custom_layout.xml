@@ -26,7 +26,7 @@
         android:src="@drawable/ic_call_red_24dp"
         android:contentDescription="@string/emergency_call"
         android:layout_alignParentRight="true"
-        android:visibility="gone"
+
        />
 
     <ImageButton
