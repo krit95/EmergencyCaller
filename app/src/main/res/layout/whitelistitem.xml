@@ -7,27 +7,27 @@
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/normal_call"
-        android:src="@drawable/ic_call_green_24dp"
-        android:contentDescription="@string/normal_call"
+        android:id="@+id/delete_btn"
+        android:src="@drawable/ic_delete_black_24dp"
+        android:contentDescription="@string/delete_number"
         android:layout_alignParentRight="true"
-        android:layout_centerInParent="true"
         android:background="#00000000"
         android:padding="16dp"/>
+
     <RelativeLayout
         android:id="@+id/contact_details"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_toLeftOf="@id/normal_call"
-        android:background="@android:color/holo_red_dark"
-        android:padding="20dp">
+        android:layout_toLeftOf="@id/delete_btn"
+        android:padding="16dp">
+
         <TextView
             android:id="@+id/cName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:textColor="@android:color/white"
-            android:textSize="15dp"
+            android:textSize="16sp"
             android:text="@string/contact_name"/>
 
         <TextView
@@ -38,6 +38,5 @@
             android:textColor="@android:color/white"
             android:text="@string/phone_number"/>
     </RelativeLayout>
-
 
 </RelativeLayout>

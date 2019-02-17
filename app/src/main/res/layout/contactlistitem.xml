@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="0dp">
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/normal_call"
+        android:src="@drawable/ic_call_green_24dp"
+        android:contentDescription="@string/normal_call"
+        android:layout_alignParentRight="true"
+        android:layout_centerInParent="true"
+        android:background="#00000000"
+        android:padding="16dp"/>
+    <RelativeLayout
+        android:id="@+id/contact_details"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/normal_call"
+        android:background="@android:color/holo_red_dark"
+        android:padding="20dp">
+        <TextView
+            android:id="@+id/cName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:text="@string/contact_name"/>
+
+        <TextView
+            android:id="@+id/phNo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/cName"
+            android:textColor="@android:color/white"
+            android:text="@string/phone_number"/>
+    </RelativeLayout>
+
+
+</RelativeLayout>
