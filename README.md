@@ -1,5 +1,5 @@
 # EmergencyCaller
-This project was made at Brickhack V, RIT, NY in collaboration with [Bishwarup Neogy](https://github.com/bishneo) and Partho Mitra<br/><br/>
+This project was made at Brickhack V, RIT, NY in collaboration with [Bishwarup Neogy](https://github.com/bishneo) and [Partho Mitra](https://github.com/parthamcomp)<br/><br/>
 ![Red means ring](emergency_caller_1.jpg)
 
 ## Tech stack
