@@ -1,6 +1,6 @@
 # EmergencyCaller
 This project was made at Brickhack V, RIT, NY in collaboration with [Bishwarup Neogy](https://github.com/bishneo) and Partho Mitra
-![Red means ring](emergency_caller.jpg)
+![Red means ring](emergency_caller_1.jpg)
 
 Tech stack
 android | android-studio | node.js | express.js | mongodb
