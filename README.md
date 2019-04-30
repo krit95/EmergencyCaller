@@ -3,7 +3,7 @@ This project was made at Brickhack V, RIT, NY in collaboration with [Bishwarup N
 ![Red means ring](emergency_caller_1.jpg)
 
 ## Tech stack
-android | android-studio | node.js | express.js | mongodb
+android | android-studio | node.js | express.js | mongodb | firebase cloud messaging
 
 ## Inspiration
 17 missed calls from Mom.
